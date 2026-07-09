@@ -1,20 +1,20 @@
 {
-  "name": "auphonic-cli",
+  "name": "tuneup",
   "version": "0.2.0",
-  "description": "CLI tool for processing audio through Auphonic",
+  "description": "CLI tool for processing and polishing audio through Auphonic + local ffmpeg cleanup",
   "type": "module",
   "bin": {
-    "auphonic": "./index.ts"
+    "tuneup": "./index.ts"
   },
   "scripts": {
     "dev": "bun run index.ts",
     "test": "bun test",
     "build": "bun build ./index.ts --outdir ./dist --target bun",
-    "build:standalone": "bun build ./index.ts --compile --target=bun-darwin-arm64 --outfile dist/auphonic-macos-apple-silicon && bun build ./index.ts --compile --target=bun-darwin-x64 --outfile dist/auphonic-macos-intel && bun build ./index.ts --compile --target=bun-linux-x64 --outfile dist/auphonic-linux-x64 && bun build ./index.ts --compile --target=bun-windows-x64 --outfile dist/auphonic-windows-x64",
-    "build:windows-x64": "bun build ./index.ts --compile --target=bun-windows-x64 --outfile dist/auphonic-windows-x64",
-    "build:macos-arm64": "bun build ./index.ts --compile --target=bun-darwin-arm64 --outfile dist/auphonic-macos-apple-silicon",
-    "build:macos-intel": "bun build ./index.ts --compile --target=bun-darwin-x64 --outfile dist/auphonic-macos-intel",
-    "build:linux-x64": "bun build ./index.ts --compile --target=bun-linux-x64 --outfile dist/auphonic-linux-x64",
+    "build:standalone": "bun build ./index.ts --compile --target=bun-darwin-arm64 --outfile dist/tuneup-macos-apple-silicon && bun build ./index.ts --compile --target=bun-darwin-x64 --outfile dist/tuneup-macos-intel && bun build ./index.ts --compile --target=bun-linux-x64 --outfile dist/tuneup-linux-x64 && bun build ./index.ts --compile --target=bun-windows-x64 --outfile dist/tuneup-windows-x64",
+    "build:windows-x64": "bun build ./index.ts --compile --target=bun-windows-x64 --outfile dist/tuneup-windows-x64",
+    "build:macos-arm64": "bun build ./index.ts --compile --target=bun-darwin-arm64 --outfile dist/tuneup-macos-apple-silicon",
+    "build:macos-intel": "bun build ./index.ts --compile --target=bun-darwin-x64 --outfile dist/tuneup-macos-intel",
+    "build:linux-x64": "bun build ./index.ts --compile --target=bun-linux-x64 --outfile dist/tuneup-linux-x64",
     "release:patch": "bun version patch && git push && git push --tags",
     "release:minor": "bun version minor && git push && git push --tags",
     "release:major": "bun version major && git push && git push --tags",

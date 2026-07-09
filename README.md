@@ -1,32 +1,43 @@
-# auphonic-cli
+# tuneup
 
 A fast, zero-dependency CLI for processing audio files through [Auphonic](https://auphonic.com). Upload, process, and download your audio — all from the terminal.
+
+## What makes it different
+
+Most Auphonic wrappers stop at "upload, wait, download." This one adds a **second, local polish pass** on top of Auphonic's output, so a single command gives you a fully finished file:
+
+- **Two-stage pipeline** — Auphonic handles loudness, leveling, and noise reduction in the cloud; then `ffmpeg` runs `adeclick` → `adeclip` → `deesser` locally to clean up mouth clicks, clipped peaks, and sibilance that Auphonic doesn't target.
+- **Non-destructive** — the post-processed file is saved as `<name>.cleaned.<ext>` alongside the original Auphonic output, so you can A/B them.
+- **Tunable de-essing** — `--deesser 0..1` lets you dial sibilance reduction without touching ffmpeg flags.
+- **Zero-dependency single binary** — Bun-compiled for macOS, Linux, and Windows. No Node, no `npm install`, no Python.
+- **Preset-name workflow with a persisted default** — `--set-preset "My Podcast"` once, then just `tuneup recording.wav` forever after.
+- **Claude Code-native install/update/uninstall** — drop-in prompts in the README so the agent handles platform detection and PATH setup for you.
 
 ## Installation
 
 ### Quick install (macOS & Linux)
 
 ```bash
-curl -fsSL https://github.com/RichardBray/auphonic-cli/releases/latest/download/install.sh | bash
+curl -fsSL https://github.com/RichardBray/tuneup/releases/latest/download/install.sh | bash
 ```
 
 ### Install a specific version
 
 ```bash
-VERSION=v0.1.0 curl -fsSL https://github.com/RichardBray/auphonic-cli/releases/latest/download/install.sh | bash
+VERSION=v0.1.0 curl -fsSL https://github.com/RichardBray/tuneup/releases/latest/download/install.sh | bash
 ```
 
 ### Windows
 
-Download `auphonic-windows-x64.exe` from the [latest release](https://github.com/RichardBray/auphonic-cli/releases/latest) and add it to your PATH.
+Download `tuneup-windows-x64.exe` from the [latest release](https://github.com/RichardBray/tuneup/releases/latest) and add it to your PATH.
 
 ### With Claude Code
 
 Paste this prompt into [Claude Code](https://claude.com/claude-code):
 
 ```
-Download the latest auphonic-cli binary for my OS and architecture from
-https://github.com/RichardBray/auphonic-cli/releases/latest — install it
+Download the latest tuneup binary for my OS and architecture from
+https://github.com/RichardBray/tuneup/releases/latest — install it
 to the appropriate location for my platform, make it executable if needed,
 and add it to my PATH if it isn't already.
 ```
@@ -34,8 +45,8 @@ and add it to my PATH if it isn't already.
 ### From source
 
 ```bash
-git clone https://github.com/RichardBray/auphonic-cli.git
-cd auphonic-cli
+git clone https://github.com/RichardBray/tuneup.git
+cd tuneup
 bun install
 ```
 
@@ -52,7 +63,7 @@ Add this to your shell profile (`~/.bashrc`, `~/.zshrc`, `~/.config/fish/config.
 ## Usage
 
 ```bash
-auphonic <file> [options]
+tuneup <file> [options]
 ```
 
 ### Options
@@ -74,31 +85,31 @@ auphonic <file> [options]
 Process a file with the default preset:
 
 ```bash
-auphonic recording.wav
+tuneup recording.wav
 ```
 
 Use a specific preset:
 
 ```bash
-auphonic recording.wav -p "My Podcast Preset"
+tuneup recording.wav -p "My Podcast Preset"
 ```
 
 Save output to a custom directory:
 
 ```bash
-auphonic recording.wav -o ./processed
+tuneup recording.wav -o ./processed
 ```
 
 List your available presets:
 
 ```bash
-auphonic --list-presets
+tuneup --list-presets
 ```
 
 Run post-processing on the Auphonic output (requires `ffmpeg` on your PATH):
 
 ```bash
-auphonic recording.wav --post-process
+tuneup recording.wav --post-process
 ```
 
 `--post-process` runs three ffmpeg filters in sequence on every downloaded audio file:
@@ -112,7 +123,7 @@ All three run together; they are not individually toggleable. The result is save
 Tune de-esser intensity with `--deesser` (0 = off, 1 = aggressive, default `0.2`):
 
 ```bash
-auphonic recording.wav --post-process --deesser 0.4
+tuneup recording.wav --post-process --deesser 0.4
 ```
 
 ### Running from source
@@ -128,14 +139,14 @@ bun run index.ts recording.wav -p "My Preset"
 Remove the binary:
 
 ```bash
-rm ~/.local/bin/auphonic
+rm ~/.local/bin/tuneup
 ```
 
 Then remove the PATH entry added by the installer from your shell config(s). Look for and delete these lines:
 
 - **bash/zsh** (`~/.bashrc`, `~/.bash_profile`, or `~/.zshrc`):
   ```
-  # Added by auphonic-cli installer
+  # Added by tuneup installer
   export PATH="$HOME/.local/bin:$PATH"
   ```
 - **fish** (`~/.config/fish/config.fish`):
@@ -151,23 +162,23 @@ If you use [Claude Code](https://claude.com/claude-code), you can install, updat
 
 **Install:**
 ```
-Download the latest auphonic-cli binary for my OS and architecture from
-https://github.com/RichardBray/auphonic-cli/releases/latest — install it
+Download the latest tuneup binary for my OS and architecture from
+https://github.com/RichardBray/tuneup/releases/latest — install it
 to the appropriate location for my platform, make it executable if needed,
 and add it to my PATH if it isn't already.
 ```
 
 **Update:**
 ```
-Update auphonic-cli to the latest version by downloading the correct binary
+Update tuneup to the latest version by downloading the correct binary
 for my OS and architecture from
-https://github.com/RichardBray/auphonic-cli/releases/latest and replacing
-~/.local/bin/auphonic with it.
+https://github.com/RichardBray/tuneup/releases/latest and replacing
+~/.local/bin/tuneup with it.
 ```
 
 **Uninstall:**
 ```
-Remove ~/.local/bin/auphonic and remove any "Added by auphonic-cli installer"
+Remove ~/.local/bin/tuneup and remove any "Added by tuneup installer"
 PATH entries from my shell config files.
 ```
 

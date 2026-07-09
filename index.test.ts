@@ -16,7 +16,7 @@ async function result(args: string[] = [], env?: Record<string, string>) {
   return { stdout, stderr, exitCode };
 }
 
-describe("auphonic cli", () => {
+describe("tuneup cli", () => {
   test("--help exits 0 and shows usage", async () => {
     const r = await result(["--help"]);
     expect(r.exitCode).toBe(0);
