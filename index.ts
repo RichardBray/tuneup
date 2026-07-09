@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 
 const BASE_URL = "https://auphonic.com/api";
-const CONFIG_DIR = join(process.env.HOME ?? "~", ".config", "auphonic-cli");
+const CONFIG_DIR = join(process.env.HOME ?? "~", ".config", "tuneup");
 const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 
 function loadConfig(): { preset?: string } {
@@ -34,10 +34,10 @@ function getApiKey(): string {
 }
 
 function printUsage(): never {
-  console.log(`auphonic - Process audio files through Auphonic
+  console.log(`tuneup - Process audio files through Auphonic + local ffmpeg polish
 
 Usage:
-  auphonic <file> [options]
+  tuneup <file> [options]
 
 Options:
   -p, --preset <name>      Preset name (default: Usual-2 or saved default)
@@ -216,12 +216,13 @@ async function pollStatus(uuid: string, headers: Record<string, string>, timeout
   }
 }
 
-async function downloadResults(uuid: string, outputDir: string, headers: Record<string, string>) {
+async function downloadResults(uuid: string, outputDir: string, headers: Record<string, string>): Promise<string[]> {
   const { mkdirSync } = await import("fs");
   mkdirSync(outputDir, { recursive: true });
 
   const details = await api(`/production/${uuid}.json`, headers);
   const files = details.data?.output_files ?? [];
+  const saved: string[] = [];
 
   for (const f of files) {
     const url = f.download_url;
@@ -236,38 +237,41 @@ async function downloadResults(uuid: string, outputDir: string, headers: Record<
     const arrayBuf = await resp.arrayBuffer();
     await Bun.write(outPath, arrayBuf);
     console.log(`Saved: ${outPath}`);
+    saved.push(outPath);
   }
+  return saved;
 }
 
 const AUDIO_EXTS = new Set(["wav", "mp3", "m4a", "aac", "flac", "ogg", "opus", "aiff", "aif"]);
 
-async function postProcess(outputDir: string, deesser: number) {
-  const { readdirSync } = await import("fs");
-  const files = readdirSync(outputDir).filter((f) => {
-    if (f.includes(".cleaned.")) return false;
-    const ext = f.split(".").pop()?.toLowerCase();
+async function postProcess(paths: string[], deesser: number) {
+  const audio = paths.filter((p) => {
+    const base = p.split("/").pop() ?? p;
+    if (base.includes(".cleaned.")) return false;
+    const ext = base.split(".").pop()?.toLowerCase();
     return ext ? AUDIO_EXTS.has(ext) : false;
   });
 
-  if (files.length === 0) {
+  if (audio.length === 0) {
     console.log("Post-process: no audio files to clean.");
     return;
   }
 
   const filter = `adeclick,adeclip,deesser=i=${deesser}`;
 
-  for (const f of files) {
-    const inPath = `${outputDir}/${f}`;
-    const dot = f.lastIndexOf(".");
-    const outPath = `${outputDir}/${f.slice(0, dot)}.cleaned${f.slice(dot)}`;
-    console.log(`Post-processing: ${f} -> ${f.slice(0, dot)}.cleaned${f.slice(dot)}`);
+  for (const inPath of audio) {
+    const dot = inPath.lastIndexOf(".");
+    const outPath = `${inPath.slice(0, dot)}.cleaned${inPath.slice(dot)}`;
+    const base = inPath.split("/").pop() ?? inPath;
+    const outBase = outPath.split("/").pop() ?? outPath;
+    console.log(`Post-processing: ${base} -> ${outBase}`);
 
     const proc = Bun.spawn(
       ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", inPath, "-af", filter, outPath],
       { stdout: "inherit", stderr: "inherit" },
     );
     const code = await proc.exited;
-    if (code !== 0) die(`ffmpeg failed on ${f} (exit ${code}). Is ffmpeg installed?`);
+    if (code !== 0) die(`ffmpeg failed on ${base} (exit ${code}). Is ffmpeg installed?`);
     console.log(`Saved: ${outPath}`);
   }
 }
@@ -294,10 +298,10 @@ console.log(`Monitor: https://auphonic.com/engine/status/${productionUuid}`);
 
 await startProduction(productionUuid, headers);
 await pollStatus(productionUuid, headers, opts.timeout);
-await downloadResults(productionUuid, opts.outputDir, headers);
+const downloaded = await downloadResults(productionUuid, opts.outputDir, headers);
 
 if (opts.postProcess) {
-  await postProcess(opts.outputDir, opts.deesser);
+  await postProcess(downloaded, opts.deesser);
 }
 
 console.log("Done!");

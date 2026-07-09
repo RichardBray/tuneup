@@ -23,17 +23,17 @@ jobs:
 
       - name: Generate checksums
         working-directory: dist
-        run: sha256sum auphonic-macos-apple-silicon auphonic-macos-intel auphonic-linux-x64 auphonic-windows-x64.exe > checksums.txt
+        run: sha256sum tuneup-macos-apple-silicon tuneup-macos-intel tuneup-linux-x64 tuneup-windows-x64.exe > checksums.txt
 
       - name: Create release with assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "${{ github.ref_name }}" \
-            dist/auphonic-macos-apple-silicon \
-            dist/auphonic-macos-intel \
-            dist/auphonic-linux-x64 \
-            dist/auphonic-windows-x64.exe \
+            dist/tuneup-macos-apple-silicon \
+            dist/tuneup-macos-intel \
+            dist/tuneup-linux-x64 \
+            dist/tuneup-windows-x64.exe \
             dist/checksums.txt \
             install.sh \
             --title "${{ github.ref_name }}" \

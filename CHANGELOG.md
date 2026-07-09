@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Added
 
-- `--set-preset` flag to save a default preset (`~/.config/auphonic-cli/config.json`)
+- `--set-preset` flag to save a default preset (`~/.config/tuneup/config.json`)
 
 ## [0.1.1] - 2026-03-19
 

@@ -29,10 +29,10 @@ detect_platform() {
         Darwin)
             case "$ARCH" in
                 arm64)
-                    BINARY="auphonic-macos-apple-silicon"
+                    BINARY="tuneup-macos-apple-silicon"
                     ;;
                 x86_64)
-                    BINARY="auphonic-macos-intel"
+                    BINARY="tuneup-macos-intel"
                     ;;
                 *)
                     log_error "Unsupported architecture: $ARCH (only arm64 and x86_64 are supported on macOS)" 1
@@ -42,7 +42,7 @@ detect_platform() {
         Linux)
             case "$ARCH" in
                 x86_64)
-                    BINARY="auphonic-linux-x64"
+                    BINARY="tuneup-linux-x64"
                     ;;
                 *)
                     log_error "Unsupported architecture: $ARCH (only x86_64 is supported on Linux)" 1
@@ -50,7 +50,7 @@ detect_platform() {
             esac
             ;;
         MINGW*|MSYS*|CYGWIN*)
-            BINARY="auphonic-windows-x64.exe"
+            BINARY="tuneup-windows-x64.exe"
             ;;
         *)
             log_error "Unsupported operating system: $OS (only macOS, Linux, and Windows are supported)" 1
@@ -102,13 +102,13 @@ install_binary() {
 
 download_binary() {
     local install_dir="$HOME/.local/bin"
-    local binary_path="$install_dir/auphonic"
+    local binary_path="$install_dir/tuneup"
     local download_url
 
     if [[ "$VERSION" == "latest" ]]; then
-        download_url="https://github.com/RichardBray/auphonic-cli/releases/latest/download/$BINARY"
+        download_url="https://github.com/RichardBray/tuneup/releases/latest/download/$BINARY"
     else
-        download_url="https://github.com/RichardBray/auphonic-cli/releases/download/$VERSION/$BINARY"
+        download_url="https://github.com/RichardBray/tuneup/releases/download/$VERSION/$BINARY"
     fi
 
     log_info "Downloading binary from GitHub releases (version: $VERSION)..."
@@ -124,9 +124,9 @@ download_checksums() {
     local checksums_url
 
     if [[ "$VERSION" == "latest" ]]; then
-        checksums_url="https://github.com/RichardBray/auphonic-cli/releases/latest/download/checksums.txt"
+        checksums_url="https://github.com/RichardBray/tuneup/releases/latest/download/checksums.txt"
     else
-        checksums_url="https://github.com/RichardBray/auphonic-cli/releases/download/$VERSION/checksums.txt"
+        checksums_url="https://github.com/RichardBray/tuneup/releases/download/$VERSION/checksums.txt"
     fi
 
     log_info "Downloading checksums for verification (version: $VERSION)..."
@@ -143,7 +143,7 @@ download_checksums() {
 }
 
 verify_checksum() {
-    local binary_path="$HOME/.local/bin/auphonic"
+    local binary_path="$HOME/.local/bin/tuneup"
 
     if [[ -z "$CHECKSUMS" ]]; then
         return 0
@@ -169,7 +169,7 @@ verify_checksum() {
 }
 
 verify_binary() {
-    local binary_path="$HOME/.local/bin/auphonic"
+    local binary_path="$HOME/.local/bin/tuneup"
 
     if [[ ! -f "$binary_path" ]]; then
         log_error "Binary not found at $binary_path" 3
@@ -217,7 +217,7 @@ update_path() {
             *)
                 if ! grep -q "$path_line" "$config_file"; then
                     echo "" >> "$config_file"
-                    echo "# Added by auphonic-cli installer" >> "$config_file"
+                    echo "# Added by tuneup installer" >> "$config_file"
                     echo "$path_line" >> "$config_file"
                     log_info "Added $install_dir to PATH in $config_file"
                 else
@@ -231,10 +231,10 @@ update_path() {
 print_summary() {
     echo ""
     echo "========================================="
-    echo "  auphonic-cli Installation Complete!"
+    echo "  tuneup Installation Complete!"
     echo "========================================="
     echo ""
-    echo "Binary location: $HOME/.local/bin/auphonic"
+    echo "Binary location: $HOME/.local/bin/tuneup"
     echo ""
     echo "Next steps:"
     echo ""
@@ -244,7 +244,7 @@ print_summary() {
     echo "   export AUPHONIC_API_KEY=\"your-api-key\""
     echo ""
     echo "3. Process audio:"
-    echo "   auphonic recording.wav -p \"My Preset\""
+    echo "   tuneup recording.wav -p \"My Preset\""
     echo ""
     echo "========================================="
     echo ""
@@ -253,7 +253,7 @@ print_summary() {
 main() {
     echo ""
     echo "========================================="
-    echo "  auphonic-cli Installer"
+    echo "  tuneup Installer"
     echo "========================================="
     echo ""
 
