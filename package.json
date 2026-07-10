@@ -1,6 +1,6 @@
 {
   "name": "tuneup",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CLI tool for processing and polishing audio through Auphonic + local ffmpeg cleanup",
   "type": "module",
   "bin": {
