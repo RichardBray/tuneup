@@ -41,7 +41,7 @@ Usage:
 
 Options:
   -p, --preset <name>      Preset name (default: Usual-2 or saved default)
-  -o, --output-dir <path>  Output directory (default: ~/Downloads/auphonic_results)
+  -o, --output-dir <path>  Output directory (default: ~/Downloads/tuneup_results)
   -t, --timeout <seconds>  Max wait time (default: 300)
   --set-preset <name>      Set the default preset and exit
   --list-presets           List available presets
@@ -54,9 +54,9 @@ Environment:
   AUPHONIC_API_KEY         Your Auphonic API bearer token (required)
 
 Examples:
-  auphonic recording.wav
-  auphonic recording.wav -p "My Preset"
-  auphonic recording.wav -o ./output`);
+  tuneup recording.wav
+  tuneup recording.wav -p "My Preset"
+  tuneup recording.wav -o ./output`);
   process.exit(0);
 }
 
@@ -66,7 +66,7 @@ function parseArgs(argv: string[]) {
   const opts = {
     file: "",
     preset: config.preset ?? "Usual-2",
-    outputDir: `${process.env.HOME}/Downloads/auphonic_results`,
+    outputDir: `${process.env.HOME}/Downloads/tuneup_results`,
     timeout: 300,
     listPresets: false,
     postProcess: false,
