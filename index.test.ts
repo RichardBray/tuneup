@@ -71,6 +71,25 @@ describe("tuneup cli", () => {
     expect(r.stdout).toContain("--deesser");
   });
 
+  test("--deesser with non-numeric value exits with a clear error", async () => {
+    const r = await result(["test.wav", "--post-process", "--deesser", "abc"], { AUPHONIC_API_KEY: "fake-key" });
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("--deesser");
+    expect(r.stderr).toContain("between 0 and 1");
+  });
+
+  test("--deesser above 1 exits with a clear error", async () => {
+    const r = await result(["test.wav", "--post-process", "--deesser", "5"], { AUPHONIC_API_KEY: "fake-key" });
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("--deesser");
+  });
+
+  test("--deesser below 0 exits with a clear error", async () => {
+    const r = await result(["test.wav", "--post-process", "--deesser", "-1"], { AUPHONIC_API_KEY: "fake-key" });
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("--deesser");
+  });
+
   test("-h is an alias for --help", async () => {
     const r = await result(["-h"]);
     expect(r.exitCode).toBe(0);
