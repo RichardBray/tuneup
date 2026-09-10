@@ -92,7 +92,14 @@ function parseArgs(argv: string[]) {
     else if ((arg === "-o" || arg === "--output-dir") && args[i + 1]) opts.outputDir = args[++i];
     else if ((arg === "-t" || arg === "--timeout") && args[i + 1]) opts.timeout = parseInt(args[++i], 10);
     else if (arg === "--post-process") opts.postProcess = true;
-    else if (arg === "--deesser" && args[i + 1]) opts.deesser = parseFloat(args[++i]);
+    else if (arg === "--deesser" && args[i + 1]) {
+      const raw = args[++i];
+      const value = parseFloat(raw);
+      if (Number.isNaN(value) || value < 0 || value > 1) {
+        die(`--deesser must be a number between 0 and 1 (got "${raw}").`);
+      }
+      opts.deesser = value;
+    }
     else if (!arg.startsWith("-") && !opts.file) opts.file = arg;
     else die(`Unknown argument: ${arg}`);
   }
