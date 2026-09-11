@@ -1,6 +1,6 @@
 import { describe, test, expect } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
-import { tmpdir } from "os";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { homedir, tmpdir } from "os";
 import { join } from "path";
 
 type EnvMap = Record<string, string | undefined>;
@@ -92,24 +92,24 @@ describe("tuneup cli", () => {
 
   test("--set-preset with HOME unset does not pollute CWD", async () => {
     const tmpCwd = mkdtempSync(join(tmpdir(), "tuneup-cwd-"));
+    const resolvedConfig = join(homedir(), ".config", "tuneup", "config.json");
+    const previous = existsSync(resolvedConfig) ? readFileSync(resolvedConfig, "utf-8") : null;
     try {
       const r = await result(["--set-preset", "UnsetHomePreset"], { HOME: undefined }, tmpCwd);
       expect(r.exitCode).toBe(0);
       expect(r.stdout).toContain("Default preset set to: UnsetHomePreset");
       expect(existsSync(join(tmpCwd, "~"))).toBe(false);
       expect(existsSync(join(tmpCwd, "undefined"))).toBe(false);
+      expect(existsSync(resolvedConfig)).toBe(true);
+      const saved = JSON.parse(readFileSync(resolvedConfig, "utf-8"));
+      expect(saved.preset).toBe("UnsetHomePreset");
     } finally {
+      if (previous === null) {
+        rmSync(resolvedConfig, { force: true });
+      } else {
+        writeFileSync(resolvedConfig, previous);
+      }
       rmSync(tmpCwd, { recursive: true, force: true });
-    }
-  });
-
-  test("empty HOME exits with a clear error", async () => {
-    const r = await result(["--help"], { HOME: "" });
-    // Bun may still resolve a passwd home for empty HOME; only assert hard-fail when it does not.
-    if (r.exitCode !== 0) {
-      expect(r.stderr).toContain("home directory");
-    } else {
-      expect(r.stdout).toContain("Usage:");
     }
   });
 

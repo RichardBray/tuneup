@@ -15,7 +15,7 @@ function die(msg: string, detail?: string): never {
 function resolveHomeDir(): string {
   const home = homedir();
   if (!home) {
-    die("Unable to determine home directory. Set HOME or pass --output-dir.");
+    die("Unable to determine home directory. Set the HOME environment variable.");
   }
   return home;
 }
