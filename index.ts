@@ -168,6 +168,39 @@ async function upload(
   return uuid;
 }
 
+/** Auphonic production status: 2=Error, 9=Incomplete — fail immediately. */
+function isFailedStatus(code: unknown): boolean {
+  return code === 2 || code === 9;
+}
+
+/**
+ * Classify status when POST /start.json is non-OK.
+ * Codes follow Auphonic production_status (OpenAPI): 2=Error, 3=Done, etc.
+ */
+type StartFallbackAction = "fail" | "complete" | "in_progress" | "start_error";
+
+function startFallbackAction(code: unknown): StartFallbackAction {
+  if (isFailedStatus(code)) return "fail";
+  if (code === 3) return "complete";
+  if (
+    typeof code === "number" &&
+    [0, 1, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15].includes(code)
+  ) {
+    return "in_progress";
+  }
+  return "start_error";
+}
+
+async function dieProductionFailed(uuid: string, headers: Record<string, string>): Promise<never> {
+  const details = await api(`/production/${uuid}.json`, headers);
+  die(
+    "Processing failed.",
+    [details.data?.error_summary, details.data?.error_message, details.data?.warning_message]
+      .filter(Boolean)
+      .join("\n")
+  );
+}
+
 async function startProduction(uuid: string, headers: Record<string, string>) {
   await new Promise((r) => setTimeout(r, 2000));
   console.log("Starting production...");
@@ -179,11 +212,10 @@ async function startProduction(uuid: string, headers: Record<string, string>) {
 
   if (!resp.ok) {
     const status = await api(`/production/${uuid}/status.json`, headers);
-    const code = status.data?.status;
-    if (![1, 2, 3].includes(code)) {
-      die("Failed to start production.", await resp.text());
-    }
-    console.log("Production already in progress.");
+    const action = startFallbackAction(status.data?.status);
+    if (action === "fail") await dieProductionFailed(uuid, headers);
+    if (action === "start_error") die("Failed to start production.", await resp.text());
+    console.log(action === "complete" ? "Production already complete." : "Production already in progress.");
   } else {
     console.log("Production started.");
   }
@@ -204,14 +236,8 @@ async function pollStatus(uuid: string, headers: Record<string, string>, timeout
       return;
     }
 
-    if (code === 2) {
-      const details = await api(`/production/${uuid}.json`, headers);
-      die(
-        "Processing failed.",
-        [details.data?.error_summary, details.data?.error_message, details.data?.warning_message]
-          .filter(Boolean)
-          .join("\n")
-      );
+    if (isFailedStatus(code)) {
+      await dieProductionFailed(uuid, headers);
     }
 
     if (Date.now() - start > timeout * 1000) {
@@ -221,6 +247,8 @@ async function pollStatus(uuid: string, headers: Record<string, string>, timeout
     await new Promise((r) => setTimeout(r, 15000));
   }
 }
+
+export { isFailedStatus, startFallbackAction };
 
 async function downloadResults(uuid: string, outputDir: string, headers: Record<string, string>): Promise<string[]> {
   const { mkdirSync } = await import("fs");
@@ -284,30 +312,32 @@ async function postProcess(paths: string[], deesser: number) {
 
 // --- Main ---
 
-const opts = parseArgs(process.argv);
-const apiKey = getApiKey();
-const headers = { Authorization: `Bearer ${apiKey}` };
+if (import.meta.main) {
+  const opts = parseArgs(process.argv);
+  const apiKey = getApiKey();
+  const headers = { Authorization: `Bearer ${apiKey}` };
 
-if (opts.listPresets) {
-  await listPresets(headers);
-  process.exit(0);
+  if (opts.listPresets) {
+    await listPresets(headers);
+    process.exit(0);
+  }
+
+  if (!opts.file) printUsage();
+
+  const presetUuid = await findPreset(opts.preset, headers);
+  console.log(`Using preset: ${opts.preset} (${presetUuid})`);
+
+  const productionUuid = await upload(opts.file, presetUuid, headers);
+  console.log(`Production: ${productionUuid}`);
+  console.log(`Monitor: https://auphonic.com/engine/status/${productionUuid}`);
+
+  await startProduction(productionUuid, headers);
+  await pollStatus(productionUuid, headers, opts.timeout);
+  const downloaded = await downloadResults(productionUuid, opts.outputDir, headers);
+
+  if (opts.postProcess) {
+    await postProcess(downloaded, opts.deesser);
+  }
+
+  console.log("Done!");
 }
-
-if (!opts.file) printUsage();
-
-const presetUuid = await findPreset(opts.preset, headers);
-console.log(`Using preset: ${opts.preset} (${presetUuid})`);
-
-const productionUuid = await upload(opts.file, presetUuid, headers);
-console.log(`Production: ${productionUuid}`);
-console.log(`Monitor: https://auphonic.com/engine/status/${productionUuid}`);
-
-await startProduction(productionUuid, headers);
-await pollStatus(productionUuid, headers, opts.timeout);
-const downloaded = await downloadResults(productionUuid, opts.outputDir, headers);
-
-if (opts.postProcess) {
-  await postProcess(downloaded, opts.deesser);
-}
-
-console.log("Done!");
