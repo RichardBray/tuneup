@@ -116,4 +116,69 @@ describe("tuneup cli", () => {
     expect(r.stderr).toContain("--timeout");
     expect(r.stderr).toContain("1.5");
   });
+
+  test("-p without value exits with requires-a-value error", async () => {
+    const r = await result(["recording.wav", "-p"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("-p");
+    expect(r.stderr).toContain("requires a value");
+    expect(r.stderr).not.toContain("Unknown argument");
+  });
+
+  test("--preset without value exits with requires-a-value error", async () => {
+    const r = await result(["recording.wav", "--preset"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("--preset");
+    expect(r.stderr).toContain("requires a value");
+  });
+
+  test("-o without value exits with requires-a-value error", async () => {
+    const r = await result(["recording.wav", "-o"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("-o");
+    expect(r.stderr).toContain("requires a value");
+  });
+
+  test("--output-dir without value exits with requires-a-value error", async () => {
+    const r = await result(["recording.wav", "--output-dir"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("--output-dir");
+    expect(r.stderr).toContain("requires a value");
+  });
+
+  test("-t without value exits with requires-a-value error", async () => {
+    const r = await result(["recording.wav", "-t"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("-t");
+    expect(r.stderr).toContain("requires a value");
+  });
+
+  test("--timeout without value exits with requires-a-value error", async () => {
+    const r = await result(["recording.wav", "--timeout"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("--timeout");
+    expect(r.stderr).toContain("requires a value");
+  });
+
+  test("--deesser without value exits with requires-a-value error", async () => {
+    const r = await result(["recording.wav", "--deesser"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("--deesser");
+    expect(r.stderr).toContain("requires a value");
+  });
+
+  test("--set-preset without value exits with requires-a-value error", async () => {
+    const r = await result(["--set-preset"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("--set-preset");
+    expect(r.stderr).toContain("requires a value");
+  });
+
+  test("-p with empty string exits with requires-a-value error", async () => {
+    const r = await result(["recording.wav", "-p", ""]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("-p");
+    expect(r.stderr).toContain("requires a value");
+    expect(r.stderr).not.toContain("Unknown argument");
+  });
 });
