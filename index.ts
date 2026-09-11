@@ -27,6 +27,12 @@ function die(msg: string, detail?: string): never {
   process.exit(1);
 }
 
+function takeValue(flag: string, args: string[], i: number): [string, number] {
+  const v = args[i + 1];
+  if (v === undefined || v === "") die(`${flag} requires a value`);
+  return [v, i + 1];
+}
+
 function getApiKey(): string {
   const key = process.env.AUPHONIC_API_KEY;
   if (!key) die("AUPHONIC_API_KEY environment variable is not set.");
@@ -80,26 +86,36 @@ function parseArgs(argv: string[]) {
       const pkg = require("./package.json");
       console.log(pkg.version);
       process.exit(0);
-    } else if (arg === "--set-preset" && args[i + 1]) {
-      const name = args[++i];
+    } else if (arg === "--set-preset") {
+      const [name, next] = takeValue(arg, args, i);
+      i = next;
       const config = loadConfig();
       config.preset = name;
       saveConfig(config);
       console.log(`Default preset set to: ${name}`);
       process.exit(0);
     } else if (arg === "--list-presets") opts.listPresets = true;
-    else if ((arg === "-p" || arg === "--preset") && args[i + 1]) opts.preset = args[++i];
-    else if ((arg === "-o" || arg === "--output-dir") && args[i + 1]) opts.outputDir = args[++i];
-    else if ((arg === "-t" || arg === "--timeout") && args[i + 1]) {
-      const raw = args[++i];
+    else if (arg === "-p" || arg === "--preset") {
+      const [v, next] = takeValue(arg, args, i);
+      i = next;
+      opts.preset = v;
+    } else if (arg === "-o" || arg === "--output-dir") {
+      const [v, next] = takeValue(arg, args, i);
+      i = next;
+      opts.outputDir = v;
+    } else if (arg === "-t" || arg === "--timeout") {
+      const [raw, next] = takeValue(arg, args, i);
+      i = next;
       if (!/^\d+$/.test(raw) || Number(raw) <= 0) {
         die(`Invalid ${arg} value: ${raw} (expected a positive integer number of seconds)`);
       }
       opts.timeout = Number(raw);
-    }
-    else if (arg === "--post-process") opts.postProcess = true;
-    else if (arg === "--deesser" && args[i + 1]) opts.deesser = parseFloat(args[++i]);
-    else if (!arg.startsWith("-") && !opts.file) opts.file = arg;
+    } else if (arg === "--post-process") opts.postProcess = true;
+    else if (arg === "--deesser") {
+      const [raw, next] = takeValue(arg, args, i);
+      i = next;
+      opts.deesser = parseFloat(raw);
+    } else if (!arg.startsWith("-") && !opts.file) opts.file = arg;
     else die(`Unknown argument: ${arg}`);
   }
 
