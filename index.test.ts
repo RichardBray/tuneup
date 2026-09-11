@@ -76,4 +76,44 @@ describe("tuneup cli", () => {
     expect(r.exitCode).toBe(0);
     expect(r.stdout).toContain("Usage:");
   });
+
+  test("--timeout abc exits with error", async () => {
+    const r = await result(["--timeout", "abc"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("--timeout");
+    expect(r.stderr).toContain("abc");
+  });
+
+  test("-t abc exits with error", async () => {
+    const r = await result(["-t", "abc"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("-t");
+    expect(r.stderr).toContain("abc");
+  });
+
+  test("--timeout 0 exits with error", async () => {
+    const r = await result(["--timeout", "0"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("--timeout");
+  });
+
+  test("--timeout -1 exits with error", async () => {
+    const r = await result(["--timeout", "-1"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("--timeout");
+  });
+
+  test("--timeout 12x exits with error", async () => {
+    const r = await result(["--timeout", "12x"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("--timeout");
+    expect(r.stderr).toContain("12x");
+  });
+
+  test("--timeout 1.5 exits with error", async () => {
+    const r = await result(["--timeout", "1.5"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("--timeout");
+    expect(r.stderr).toContain("1.5");
+  });
 });

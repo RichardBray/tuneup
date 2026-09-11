@@ -90,7 +90,13 @@ function parseArgs(argv: string[]) {
     } else if (arg === "--list-presets") opts.listPresets = true;
     else if ((arg === "-p" || arg === "--preset") && args[i + 1]) opts.preset = args[++i];
     else if ((arg === "-o" || arg === "--output-dir") && args[i + 1]) opts.outputDir = args[++i];
-    else if ((arg === "-t" || arg === "--timeout") && args[i + 1]) opts.timeout = parseInt(args[++i], 10);
+    else if ((arg === "-t" || arg === "--timeout") && args[i + 1]) {
+      const raw = args[++i];
+      if (!/^\d+$/.test(raw) || Number(raw) <= 0) {
+        die(`Invalid ${arg} value: ${raw} (expected a positive integer number of seconds)`);
+      }
+      opts.timeout = Number(raw);
+    }
     else if (arg === "--post-process") opts.postProcess = true;
     else if (arg === "--deesser" && args[i + 1]) opts.deesser = parseFloat(args[++i]);
     else if (!arg.startsWith("-") && !opts.file) opts.file = arg;
