@@ -92,10 +92,11 @@ function parseArgs(argv: string[]) {
     else if ((arg === "-o" || arg === "--output-dir") && args[i + 1]) opts.outputDir = args[++i];
     else if ((arg === "-t" || arg === "--timeout") && args[i + 1]) {
       const raw = args[++i];
-      if (!/^\d+$/.test(raw) || Number(raw) <= 0) {
+      const num = Number(raw);
+      if (!/^\d+$/.test(raw) || !Number.isFinite(num) || num <= 0) {
         die(`Invalid ${arg} value: ${raw} (expected a positive integer number of seconds)`);
       }
-      opts.timeout = Number(raw);
+      opts.timeout = num;
     }
     else if (arg === "--post-process") opts.postProcess = true;
     else if (arg === "--deesser" && args[i + 1]) opts.deesser = parseFloat(args[++i]);

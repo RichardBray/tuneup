@@ -116,4 +116,11 @@ describe("tuneup cli", () => {
     expect(r.stderr).toContain("--timeout");
     expect(r.stderr).toContain("1.5");
   });
+
+  test("--timeout overflow digits exits with error", async () => {
+    const huge = "9".repeat(400);
+    const r = await result(["--timeout", huge]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("--timeout");
+  });
 });
