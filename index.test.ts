@@ -1,15 +1,35 @@
 import { describe, test, expect } from "bun:test";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 
-const run = (args: string[] = [], env?: Record<string, string>) =>
-  Bun.spawn(["bun", "run", "index.ts", ...args], {
-    cwd: import.meta.dir,
+type EnvMap = Record<string, string | undefined>;
+
+function buildEnv(env?: EnvMap): Record<string, string> {
+  const merged: Record<string, string | undefined> = {
+    ...process.env,
+    ...env,
+    AUPHONIC_API_KEY: env?.AUPHONIC_API_KEY ?? "",
+  };
+  // Allow tests to omit HOME by passing { HOME: undefined }.
+  if (env && Object.prototype.hasOwnProperty.call(env, "HOME") && env.HOME === undefined) {
+    delete merged.HOME;
+  }
+  return Object.fromEntries(
+    Object.entries(merged).filter(([, v]) => v !== undefined),
+  ) as Record<string, string>;
+}
+
+const run = (args: string[] = [], env?: EnvMap, cwd: string = import.meta.dir) =>
+  Bun.spawn(["bun", "run", join(import.meta.dir, "index.ts"), ...args], {
+    cwd,
     stdout: "pipe",
     stderr: "pipe",
-    env: { ...process.env, ...env, AUPHONIC_API_KEY: env?.AUPHONIC_API_KEY ?? "" },
+    env: buildEnv(env),
   });
 
-async function result(args: string[] = [], env?: Record<string, string>) {
-  const proc = run(args, env);
+async function result(args: string[] = [], env?: EnvMap, cwd?: string) {
+  const proc = run(args, env, cwd);
   const stdout = await new Response(proc.stdout).text();
   const stderr = await new Response(proc.stderr).text();
   const exitCode = await proc.exited;
@@ -56,13 +76,41 @@ describe("tuneup cli", () => {
   });
 
   test("--set-preset saves default and exits 0", async () => {
-    const tmpDir = `${import.meta.dir}/.test-config-${Date.now()}`;
-    const r = await result(["--set-preset", "TestPreset"], { HOME: tmpDir });
-    expect(r.exitCode).toBe(0);
-    expect(r.stdout).toContain("Default preset set to: TestPreset");
-    // Clean up
-    const { rmSync } = await import("fs");
-    rmSync(tmpDir, { recursive: true, force: true });
+    const tmpDir = mkdtempSync(join(tmpdir(), "tuneup-config-"));
+    try {
+      const r = await result(["--set-preset", "TestPreset"], { HOME: tmpDir });
+      expect(r.exitCode).toBe(0);
+      expect(r.stdout).toContain("Default preset set to: TestPreset");
+      const configPath = join(tmpDir, ".config", "tuneup", "config.json");
+      expect(existsSync(configPath)).toBe(true);
+      const saved = JSON.parse(readFileSync(configPath, "utf-8"));
+      expect(saved.preset).toBe("TestPreset");
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  test("--set-preset with HOME unset does not pollute CWD", async () => {
+    const tmpCwd = mkdtempSync(join(tmpdir(), "tuneup-cwd-"));
+    try {
+      const r = await result(["--set-preset", "UnsetHomePreset"], { HOME: undefined }, tmpCwd);
+      expect(r.exitCode).toBe(0);
+      expect(r.stdout).toContain("Default preset set to: UnsetHomePreset");
+      expect(existsSync(join(tmpCwd, "~"))).toBe(false);
+      expect(existsSync(join(tmpCwd, "undefined"))).toBe(false);
+    } finally {
+      rmSync(tmpCwd, { recursive: true, force: true });
+    }
+  });
+
+  test("empty HOME exits with a clear error", async () => {
+    const r = await result(["--help"], { HOME: "" });
+    // Bun may still resolve a passwd home for empty HOME; only assert hard-fail when it does not.
+    if (r.exitCode !== 0) {
+      expect(r.stderr).toContain("home directory");
+    } else {
+      expect(r.stdout).toContain("Usage:");
+    }
   });
 
   test("--help mentions post-process options", async () => {

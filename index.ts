@@ -1,10 +1,27 @@
 #!/usr/bin/env bun
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { homedir } from "os";
 import { join } from "path";
 
 const BASE_URL = "https://auphonic.com/api";
-const CONFIG_DIR = join(process.env.HOME ?? "~", ".config", "tuneup");
+
+function die(msg: string, detail?: string): never {
+  console.error(`Error: ${msg}`);
+  if (detail) console.error(detail);
+  process.exit(1);
+}
+
+function resolveHomeDir(): string {
+  const home = homedir();
+  if (!home) {
+    die("Unable to determine home directory. Set HOME or pass --output-dir.");
+  }
+  return home;
+}
+
+const HOME_DIR = resolveHomeDir();
+const CONFIG_DIR = join(HOME_DIR, ".config", "tuneup");
 const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 
 function loadConfig(): { preset?: string } {
@@ -19,12 +36,6 @@ function loadConfig(): { preset?: string } {
 function saveConfig(config: Record<string, unknown>) {
   mkdirSync(CONFIG_DIR, { recursive: true });
   writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2) + "\n");
-}
-
-function die(msg: string, detail?: string): never {
-  console.error(`Error: ${msg}`);
-  if (detail) console.error(detail);
-  process.exit(1);
 }
 
 function getApiKey(): string {
@@ -66,7 +77,7 @@ function parseArgs(argv: string[]) {
   const opts = {
     file: "",
     preset: config.preset ?? "Usual-2",
-    outputDir: `${process.env.HOME}/Downloads/tuneup_results`,
+    outputDir: join(HOME_DIR, "Downloads", "tuneup_results"),
     timeout: 300,
     listPresets: false,
     postProcess: false,
