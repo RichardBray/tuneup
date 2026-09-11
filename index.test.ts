@@ -1,4 +1,5 @@
 import { describe, test, expect } from "bun:test";
+import { isFailedStatus, startFallbackAction } from "./index.ts";
 
 const run = (args: string[] = [], env?: Record<string, string>) =>
   Bun.spawn(["bun", "run", "index.ts", ...args], {
@@ -115,5 +116,34 @@ describe("tuneup cli", () => {
     expect(r.exitCode).toBe(1);
     expect(r.stderr).toContain("--timeout");
     expect(r.stderr).toContain("1.5");
+  });
+});
+
+describe("startFallbackAction / production status", () => {
+  test("error and incomplete are fail", () => {
+    expect(startFallbackAction(2)).toBe("fail");
+    expect(startFallbackAction(9)).toBe("fail");
+    expect(isFailedStatus(2)).toBe(true);
+    expect(isFailedStatus(9)).toBe(true);
+  });
+
+  test("done is complete", () => {
+    expect(startFallbackAction(3)).toBe("complete");
+    expect(isFailedStatus(3)).toBe(false);
+  });
+
+  test("in-flight and waiting codes are in_progress", () => {
+    for (const code of [0, 1, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15]) {
+      expect(startFallbackAction(code)).toBe("in_progress");
+      expect(isFailedStatus(code)).toBe(false);
+    }
+  });
+
+  test("unknown or non-numeric codes are start_error", () => {
+    expect(startFallbackAction(undefined)).toBe("start_error");
+    expect(startFallbackAction(null)).toBe("start_error");
+    expect(startFallbackAction("2")).toBe("start_error");
+    expect(startFallbackAction(-1)).toBe("start_error");
+    expect(startFallbackAction(99)).toBe("start_error");
   });
 });
